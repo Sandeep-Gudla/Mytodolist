@@ -24,16 +24,17 @@
         
         .container {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 100%;
-            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(32, 38, 76, 0.12);
+            max-width: 640px;
+            width: min(100%, 640px);
+            padding: 34px;
         }
         
         .header {
             margin-bottom: 30px;
             text-align: center;
+            position: relative;
         }
         
         .header h1 {
@@ -49,22 +50,87 @@
         
         .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(100px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .menu-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+            border: 1px solid rgba(102, 110, 234, 0.2);
+            background: #f8f9ff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 35px rgba(79, 110, 248, 0.12);
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 56px;
+            right: 0;
+            width: 220px;
+            background: white;
+            border: 1px solid #e8ecff;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(32, 38, 76, 0.12);
+            padding: 14px;
+            z-index: 2;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .menu-dropdown.hidden {
+            display: none;
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 12px;
-            margin-bottom: 25px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            color: #1f2937;
+        }
+
+        .menu-item:hover {
+            background: #f5f7ff;
+        }
+
+        .menu-item strong {
+            font-size: 14px;
+        }
+
+        .menu-item .menu-action {
+            color: #4f6ef8;
+            font-weight: 700;
         }
         
         .stat-card {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
+            background: #f7f8ff;
+            padding: 18px 14px;
+            border-radius: 16px;
             text-align: center;
+            border: 1px solid #eef2ff;
         }
         
         .stat-card .number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
+            font-size: 28px;
+            font-weight: 800;
+            color: #4f6ef8;
             margin: 0;
         }
         
@@ -77,34 +143,39 @@
         
         .input-row {
             display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 12px;
             margin-bottom: 20px;
         }
         
         .input-row input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            flex: 1 1 180px;
+            min-width: 0;
+            padding: 14px 16px;
+            border: 1px solid #d8dbe6;
+            border-radius: 12px;
             font-size: 15px;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #fafbff;
         }
         
         .input-row input:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
         }
         
         .input-row button {
-            padding: 12px 20px;
+            flex: 0 0 auto;
+            padding: 14px 22px;
             background: #667eea;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: bold;
+            border-radius: 12px;
+            font-weight: 700;
             font-size: 14px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s ease, transform 0.15s ease;
         }
         
         .input-row button:hover {
@@ -112,39 +183,182 @@
         }
         
         .input-row button:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
         
+        .login-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .login-row button {
+            padding: 10px 18px;
+            background: #ffffff;
+            color: #333;
+            border: 1px solid #d8dbe6;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .login-row button:hover {
+            background: #f3f4ff;
+            border-color: #b0b7f5;
+        }
+
+        .login-row span {
+            color: #555;
+            font-weight: 600;
+        }
+
         .task-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 16px;
         }
         
         .task-item {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            transition: all 0.2s ease;
+            flex-direction: column;
+            gap: 16px;
+            padding: 24px;
+            border: 1px solid #e7ecfb;
+            border-radius: 22px;
+            background: #ffffff;
+            box-shadow: 0 18px 45px rgba(98, 106, 210, 0.08);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
         }
         
         .task-item:hover {
-            background: #f9f9f9;
-            border-color: #667eea;
+            background: #f8f9ff;
+            border-color: #d5d8f4;
+            transform: translateY(-2px);
         }
         
         .task-item.completed {
-            opacity: 0.6;
-            background: #f5f5f5;
+            opacity: 0.95;
+            background: #eef3ff;
+            border-color: #c7d0f8;
         }
-        
-        .task-item.completed .task-text {
-            text-decoration: line-through;
-            color: #999;
+
+        .task-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .task-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .task-meta {
+            display: grid;
+            gap: 6px;
+            color: #57606a;
+            font-size: 14px;
+        }
+
+        .task-meta span {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-toggle,
+        .update-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .task-toggle {
+            background: #4f6ef8;
+            color: white;
+            box-shadow: 0 12px 28px rgba(79, 110, 248, 0.2);
+        }
+
+        .task-toggle:hover,
+        .update-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .task-toggle:active,
+        .update-button:active {
+            transform: translateY(0);
+        }
+
+        .update-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .update-input {
+            flex: 1 1 220px;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 1px solid #d8dbe6;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fafbff;
+        }
+
+        .update-button {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .task-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .update-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .task-history {
+            color: #515b6a;
+            font-size: 13px;
+            line-height: 1.65;
+            padding: 14px 16px;
+            background: #f8fafe;
+            border-radius: 14px;
+            border: 1px solid #e9efff;
         }
         
         .task-checkbox {
@@ -163,29 +377,97 @@
         }
         
         .task-delete {
-            padding: 6px 10px;
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            padding: 10px 11px;
             border: none;
-            background: transparent;
-            color: #999;
+            background: #ff4d4f;
+            color: white;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 12px;
             font-size: 14px;
-            transition: all 0.2s;
+            transition: background 0.2s ease, transform 0.15s ease;
+            line-height: 1;
+            box-shadow: 0 8px 20px rgba(255, 77, 79, 0.16);
         }
         
         .task-delete:hover {
-            background: #ffe0e0;
-            color: #d32f2f;
+            background: #c62828;
+            transform: translateY(-1px);
+        }
+
+        .confirm-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 9999;
+        }
+
+        .confirm-dialog {
+            background: white;
+            padding: 24px;
+            border-radius: 18px;
+            width: min(90%, 380px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+            text-align: center;
+        }
+
+        .confirm-dialog h2 {
+            margin-bottom: 12px;
+            font-size: 20px;
+            color: #222;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 22px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .confirm-button,
+        .cancel-button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .confirm-button {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .cancel-button {
+            background: #f3f3f3;
+            color: #333;
+        }
+
+        .hidden {
+            display: none;
         }
         
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            color: #999;
+            padding: 30px 20px;
+            color: #86a0c7;
+            background: #f7f8ff;
+            border-radius: 18px;
+            border: 1px dashed #d7e0ff;
         }
         
         .empty-state p {
-            font-size: 14px;
+            font-size: 15px;
             margin: 0;
         }
     </style>
@@ -193,8 +475,26 @@
 <body>
     <div class="container">
         <div class="header">
+            <button class="menu-button" onclick="toggleMenu()" aria-label="Open menu">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16' stroke='%234f6ef8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" alt="Menu" />
+            </button>
+
             <h1>📝 My Tasks</h1>
             <p>Stay organized and productive</p>
+
+            <div id="menu-dropdown" class="menu-dropdown hidden">
+                <div class="menu-item">
+                    <span id="menu-user">Not signed in</span>
+                </div>
+                <div id="menu-signin" class="menu-item" onclick="signIn()">
+                    <strong>Sign in</strong>
+                    <span class="menu-action">Google</span>
+                </div>
+                <div id="menu-signout" class="menu-item hidden" onclick="signOutUser()">
+                    <strong>Sign out</strong>
+                    <span class="menu-action">Exit</span>
+                </div>
+            </div>
         </div>
 
         <div class="stats">
@@ -213,38 +513,37 @@
         </div>
 
         <div class="input-row">
+            <input
+                type="text"
+                id="task-input"
+                placeholder="What needs to be done?"
+            />
 
-    <input
-        type="text"
-        id="task-input"
-        placeholder="What needs to be done?"
-    />
+            <input
+                type="text"
+                id="assigned-to"
+                placeholder="Assign To"
+            />
 
-    <input
-        type="text"
-        id="assigned-to"
-        placeholder="Assign To"
-    />
-
-    <button onclick="addTask()">
-        Add
-    </button>
-
-</div>
-
-<div style="margin-bottom:20px;">
-
-    <button id="login-btn">
-        Login With Google
-    </button>
-
-    <span id="user-name"></span>
-
-</div>
+            <button onclick="addTask()">
+                Add
+            </button>
+        </div>
 
         <div class="task-list" id="task-list">
             <div class="empty-state">
                 <p>✨ No tasks yet. Add one to get started!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="confirm-modal hidden">
+        <div class="confirm-dialog">
+            <h2>Confirm delete</h2>
+            <p>Do you really want to delete this task?</p>
+            <div class="confirm-actions">
+                <button class="cancel-button" onclick="cancelDelete()">Cancel</button>
+                <button class="confirm-button" onclick="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>

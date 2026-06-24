@@ -3,6 +3,7 @@ import { auth, db } from "./firebase-config.js";
 import {
   GoogleAuthProvider,
   signInWithPopup,
+  signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -10,6 +11,7 @@ import {
   collection,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
@@ -17,13 +19,28 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let currentUser = null;
+let pendingDeleteId = null;
 
 const taskList = document.getElementById("task-list");
-const loginBtn = document.getElementById("login-btn");
-const userName = document.getElementById("user-name");
+const menuDropdown = document.getElementById("menu-dropdown");
+const menuUser = document.getElementById("menu-user");
+const menuSignIn = document.getElementById("menu-signin");
+const menuSignOut = document.getElementById("menu-signout");
 
-// Login with Google
-loginBtn.addEventListener("click", async () => {
+window.toggleMenu = function () {
+  if (menuDropdown) {
+    menuDropdown.classList.toggle("hidden");
+  }
+};
+
+window.closeMenu = function () {
+  if (menuDropdown) {
+    menuDropdown.classList.add("hidden");
+  }
+};
+
+window.signIn = async function () {
+  window.closeMenu();
   try {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
@@ -31,19 +48,44 @@ loginBtn.addEventListener("click", async () => {
     console.error(error);
     alert("Login failed");
   }
-});
+};
+
+window.signOutUser = async function () {
+  window.closeMenu();
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 // Detect logged-in user
 onAuthStateChanged(auth, (user) => {
 
   if (user) {
-
     currentUser = user;
-
-    userName.textContent =
-      `Logged in as ${user.displayName}`;
-
+    if (menuUser) {
+      menuUser.textContent = user.displayName || "Signed in";
+    }
+    if (menuSignIn) {
+      menuSignIn.classList.add("hidden");
+    }
+    if (menuSignOut) {
+      menuSignOut.classList.remove("hidden");
+    }
     loadTasks();
+  } else {
+    currentUser = null;
+    if (menuUser) {
+      menuUser.textContent = "Not signed in";
+    }
+    if (menuSignIn) {
+      menuSignIn.classList.remove("hidden");
+    }
+    if (menuSignOut) {
+      menuSignOut.classList.add("hidden");
+    }
+    taskList.innerHTML = "";
   }
 });
 
@@ -115,59 +157,44 @@ function loadTasks() {
 
       div.innerHTML = `
 
-        <div style="width:100%">
+        <div class="task-card-top">
+          <div class="task-title">${task.text}</div>
+          <button class="task-delete" onclick="deleteTask('${id}')" aria-label="Delete task">
+            🗑️
+          </button>
+        </div>
 
-          <strong>${task.text}</strong>
+        <div class="task-meta">
+          <div><span>Assigned:</span> <strong>${task.assignedTo}</strong></div>
+          <div><span>Created by:</span> <strong>${task.createdBy}</strong></div>
+        </div>
 
-          <br><br>
-
-          Assigned To:
-          <b>${task.assignedTo}</b>
-
-          <br>
-
-          Created By:
-          <b>${task.createdBy}</b>
-
-          <br><br>
-
-          <button onclick="toggleTask('${id}', ${task.completed})">
+        <div class="task-actions">
+          <button class="task-toggle" onclick="toggleTask('${id}', ${task.completed})">
             ${task.completed ? "Undo" : "Done"}
           </button>
+        </div>
 
-          <br><br>
+        <div class="update-row">
+          <input class="update-input" id="update-${id}" placeholder="Add update" />
+          <button class="update-button" onclick="addUpdate('${id}')">Update</button>
+        </div>
 
-          <input
-            id="update-${id}"
-            placeholder="Add update"
-          />
-
-          <button onclick="addUpdate('${id}')">
-            Update
-          </button>
-
-          <hr>
-
-          <h4>Updates</h4>
-
+        <div class="task-section">
+          <div class="section-title">Updates</div>
           ${(task.updates || []).map(update => `
-            <div style="
-              background:#f5f5f5;
-              padding:6px;
-              margin-bottom:5px;
-              border-radius:5px;
-            ">
-              <b>${update.user}</b>:
-              ${update.message}
+            <div class="update-item">
+              <strong>${update.user}</strong>
+              <span>${update.message}</span>
             </div>
           `).join("")}
+        </div>
 
-          <h4>History</h4>
-
-          <small>
+        <div class="task-section">
+          <div class="section-title">History</div>
+          <div class="task-history">
             ${(task.history || []).join("<br>")}
-          </small>
-
+          </div>
         </div>
       `;
 
@@ -198,6 +225,42 @@ window.toggleTask = async function (id, current) {
 
   } catch (error) {
     console.error(error);
+  }
+};
+
+// Delete Task
+window.deleteTask = function (id) {
+
+  if (!currentUser) return;
+
+  pendingDeleteId = id;
+  const modal = document.getElementById("confirm-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
+};
+
+window.cancelDelete = function () {
+  pendingDeleteId = null;
+  const modal = document.getElementById("confirm-modal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+};
+
+window.confirmDelete = async function () {
+  if (!currentUser || !pendingDeleteId) return;
+
+  try {
+    await deleteDoc(doc(db, "tasks", pendingDeleteId));
+  } catch (error) {
+    console.error(error);
+  } finally {
+    pendingDeleteId = null;
+    const modal = document.getElementById("confirm-modal");
+    if (modal) {
+      modal.classList.add("hidden");
+    }
   }
 };
 
