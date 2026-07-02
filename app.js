@@ -26,6 +26,7 @@ let tasks = [];
 let unsubscribeTasks = null;
 let suggestionIndex = -1;
 let selectedCalendarDate = null;
+let visibleCalendarDate = new Date();
 
 const PEOPLE_STORAGE_KEY = "my-task-app-people";
 const TASK_STORAGE_KEY = "my-task-app-tasks";
@@ -55,6 +56,9 @@ let personCounts = null;
 let activityTimeline = null;
 let calendarGrid = null;
 let calendarSummary = null;
+let calendarMonthLabel = null;
+let calendarPrevButton = null;
+let calendarNextButton = null;
 let loadingOverlay = null;
 let toastRoot = null;
 
@@ -88,6 +92,9 @@ function bootstrap() {
   activityTimeline = document.getElementById("activity-timeline");
   calendarGrid = document.getElementById("calendar-grid");
   calendarSummary = document.getElementById("calendar-summary");
+  calendarMonthLabel = document.getElementById("calendar-month-label");
+  calendarPrevButton = document.getElementById("calendar-prev");
+  calendarNextButton = document.getElementById("calendar-next");
   loadingOverlay = document.getElementById("loading-overlay");
   toastRoot = document.getElementById("toast-root");
 
@@ -161,8 +168,28 @@ function attachEvents() {
   if (calendarToggle) {
     calendarToggle.addEventListener("click", () => {
       if (calendarPanel) {
-        calendarPanel.classList.toggle("hidden");
+        const isHidden = calendarPanel.classList.toggle("hidden");
+        if (!isHidden) {
+          renderCalendar();
+          calendarPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
+    });
+  }
+
+  if (calendarPrevButton) {
+    calendarPrevButton.addEventListener("click", () => {
+      visibleCalendarDate = new Date(visibleCalendarDate.getFullYear(), visibleCalendarDate.getMonth() - 1, 1);
+      selectedCalendarDate = createDateKey(visibleCalendarDate.getFullYear(), visibleCalendarDate.getMonth(), 1);
+      renderCalendar();
+    });
+  }
+
+  if (calendarNextButton) {
+    calendarNextButton.addEventListener("click", () => {
+      visibleCalendarDate = new Date(visibleCalendarDate.getFullYear(), visibleCalendarDate.getMonth() + 1, 1);
+      selectedCalendarDate = createDateKey(visibleCalendarDate.getFullYear(), visibleCalendarDate.getMonth(), 1);
+      renderCalendar();
     });
   }
 
@@ -905,7 +932,7 @@ function renderTasks() {
             })
             .join("")
         : "";
-      const dueText = task.dueDate ? `${formatDate(task.dueDate)}${task.dueTime ? ` · ${task.dueTime}` : ""}` : "No due date";
+      const dueText = task.dueDate ? `${formatDate(task.dueDate)}${task.dueTime ? ` · ${formatTime(task.dueTime)}` : ""}` : "No due date";
       const statusOptions = ["Open", "In Progress", "Blocked", "Completed", "Cancelled"]
         .map((status) => `<option value="${status}" ${task.status === status ? "selected" : ""}>${status}</option>`)
         .join("");
@@ -1002,47 +1029,77 @@ function renderActivityTimeline() {
 
 function renderCalendar() {
   if (!calendarGrid || !calendarSummary) return;
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+
+  const todayKey = getDateKey(new Date());
+  selectedCalendarDate = selectedCalendarDate || todayKey;
+
+  const year = visibleCalendarDate.getFullYear();
+  const month = visibleCalendarDate.getMonth();
+  const visibleMonthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  if (!selectedCalendarDate.startsWith(visibleMonthKey)) {
+    selectedCalendarDate = todayKey.startsWith(visibleMonthKey) ? todayKey : createDateKey(year, month, 1);
+  }
+
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const startDay = firstDay.getDay();
   const daysInMonth = lastDay.getDate();
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const cells = [];
+
+  if (calendarMonthLabel) {
+    calendarMonthLabel.textContent = new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      year: "numeric"
+    }).format(firstDay);
+  }
+
   dayNames.forEach((name) => cells.push(`<div class="calendar-head">${name}</div>`));
 
   for (let index = 0; index < startDay; index += 1) {
-    cells.push('<div class="calendar-cell muted"></div>');
+    cells.push('<div class="calendar-cell muted" aria-hidden="true"></div>');
   }
 
   for (let day = 1; day <= daysInMonth; day += 1) {
-    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const hasTasks = tasks.some((task) => task.dueDate === dateKey);
+    const dateKey = createDateKey(year, month, day);
+    const dayTasks = tasks.filter((task) => task.dueDate === dateKey);
+    const hasTasks = dayTasks.length > 0;
     const isSelected = selectedCalendarDate === dateKey;
+    const isToday = todayKey === dateKey;
     cells.push(`
-      <button type="button" class="calendar-cell ${hasTasks ? "has-task" : ""} ${isSelected ? "selected" : ""}" onclick="selectCalendarDate('${dateKey}')">
+      <button type="button" class="calendar-cell ${hasTasks ? "has-task" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}" onclick="selectCalendarDate('${dateKey}')" aria-label="${formatDate(dateKey)}${hasTasks ? `, ${dayTasks.length} task${dayTasks.length === 1 ? "" : "s"}` : ""}">
         <span>${day}</span>
+        ${hasTasks ? `<small class="calendar-count">${dayTasks.length}</small>` : ""}
       </button>
     `);
   }
 
   calendarGrid.innerHTML = cells.join("");
-  selectedCalendarDate = selectedCalendarDate || `${year}-${String(month + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
   updateCalendarSummary();
 }
 
 function updateCalendarSummary() {
   if (!calendarSummary) return;
-  const selectedTasks = tasks.filter((task) => task.dueDate === selectedCalendarDate);
+  const selectedTasks = tasks
+    .filter((task) => task.dueDate === selectedCalendarDate)
+    .sort((a, b) => (a.dueTime || "99:99").localeCompare(b.dueTime || "99:99"));
+  const selectedLabel = selectedCalendarDate ? formatDate(selectedCalendarDate) : "Selected day";
   calendarSummary.innerHTML = selectedTasks.length
-    ? selectedTasks.map((task) => `<div class="calendar-task">${escapeAttribute(task.text)}</div>`).join("")
-    : '<div class="comment-empty">No tasks for this day.</div>';
+    ? selectedTasks.map((task) => `
+      <div class="calendar-task">
+        <strong>${escapeAttribute(task.text)}</strong>
+        <span>${task.dueTime ? formatTime(task.dueTime) : "No time set"}</span>
+      </div>
+    `).join("")
+    : `<div class="comment-empty">No tasks for ${escapeAttribute(selectedLabel)}.</div>`;
 }
 
 window.selectCalendarDate = function (dateKey) {
   selectedCalendarDate = dateKey;
+  const parsed = parseDateKey(dateKey);
+  if (parsed) {
+    visibleCalendarDate = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
+  }
   renderCalendar();
 };
 
@@ -1076,14 +1133,44 @@ function renderAssistantContent() {
 
 function formatDate(value) {
   if (!value) return "";
-  const date = new Date(value);
-  return isNaN(date) ? value : date.toLocaleDateString();
+  const date = parseDateKey(value) || new Date(value);
+  return isNaN(date) ? value : new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(date);
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  const match = String(value).match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return value;
+  const date = new Date();
+  date.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function formatTimestamp(value) {
   if (!value) return "";
   const date = new Date(value);
   return isNaN(date) ? value : date.toLocaleString();
+}
+
+function createDateKey(year, monthIndex, day) {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getDateKey(date) {
+  return createDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function parseDateKey(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 }
 
 function getLabelColor(label) {
