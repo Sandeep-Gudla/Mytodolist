@@ -470,6 +470,141 @@
             font-size: 15px;
             margin: 0;
         }
+
+        .people-manager {
+            position: relative;
+        }
+
+        .people-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .people-form input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d8dbe6;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .people-form button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .people-form .primary {
+            background: #4f6ef8;
+            color: white;
+        }
+
+        .people-form .secondary {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .people-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .person-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8f9ff;
+            color: #334155;
+        }
+
+        .person-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .person-action {
+            border: none;
+            padding: 6px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .person-action.edit {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .person-action.delete {
+            background: #ffe4e6;
+            color: #b91c1c;
+        }
+
+        .people-empty {
+            color: #64748b;
+            font-size: 13px;
+            padding: 10px 0;
+        }
+
+        .people-status {
+            margin-top: 8px;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .people-status.success {
+            color: #166534;
+        }
+
+        .people-status.error {
+            color: #b91c1c;
+        }
+
+        .assignment-wrapper {
+            position: relative;
+            flex: 1 1 180px;
+            min-width: 0;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+            z-index: 3;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            color: #334155;
+        }
+
+        .suggestion-item:hover {
+            background: #f5f7ff;
+        }
     </style>
 </head>
 <body>
@@ -489,6 +624,10 @@
                 <div id="menu-signin" class="menu-item" onclick="signIn()">
                     <strong>Sign in</strong>
                     <span class="menu-action">Google</span>
+                </div>
+                <div class="menu-item" onclick="openPeopleManager()">
+                    <strong>Add People</strong>
+                    <span class="menu-action">Manage</span>
                 </div>
                 <div id="menu-signout" class="menu-item hidden" onclick="signOutUser()">
                     <strong>Sign out</strong>
@@ -519,11 +658,15 @@
                 placeholder="What needs to be done?"
             />
 
-            <input
-                type="text"
-                id="assigned-to"
-                placeholder="Assign To"
-            />
+            <div class="assignment-wrapper">
+                <input
+                    type="text"
+                    id="assigned-to"
+                    placeholder="Assign To"
+                    autocomplete="off"
+                />
+                <div id="people-suggestions" class="suggestions hidden"></div>
+            </div>
 
             <button onclick="addTask()">
                 Add
@@ -533,6 +676,27 @@
         <div class="task-list" id="task-list">
             <div class="empty-state">
                 <p>✨ No tasks yet. Add one to get started!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="people-modal" class="confirm-modal hidden">
+        <div class="confirm-dialog">
+            <h2>Add People</h2>
+            <p>Save names here to use them in assignment suggestions.</p>
+            <div class="people-manager">
+                <div class="people-form">
+                    <input type="text" id="person-name" placeholder="Person name" />
+                    <div class="confirm-actions">
+                        <button class="cancel-button" type="button" onclick="resetPeopleForm()">Clear</button>
+                        <button class="primary" type="button" onclick="savePerson()">Save</button>
+                    </div>
+                </div>
+                <div id="people-status" class="people-status"></div>
+                <div id="people-list" class="people-list"></div>
+            </div>
+            <div class="confirm-actions" style="margin-top: 16px; justify-content: flex-end;">
+                <button class="cancel-button" onclick="closePeopleManager()">Close</button>
             </div>
         </div>
     </div>
