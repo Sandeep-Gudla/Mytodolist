@@ -76,6 +76,45 @@ function normalizeName(value) {
   return value.trim().toLowerCase();
 }
 
+function titleCaseName(value) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
+}
+
+function addPersonIfMissing(rawName) {
+  const normalized = normalizeName(rawName);
+  if (!normalized) {
+    return "";
+  }
+
+  const existing = people.find(
+    (entry) => normalizeName(entry.name) === normalized
+  );
+
+  if (existing) {
+    return existing.name;
+  }
+
+  const titleName = titleCaseName(rawName);
+  const newPerson = {
+    id: crypto.randomUUID(),
+    name: titleName
+  };
+
+  people.push(newPerson);
+  savePeople();
+  renderPeopleList();
+  updateAssignmentSuggestions();
+
+  return titleName;
+}
+
 function setPeopleMessage(message, isError = false) {
   const messageBox = document.getElementById("people-status");
   if (!messageBox) return;
@@ -198,7 +237,8 @@ window.resetPeopleForm = function () {
 
 window.savePerson = function () {
   const nameInput = document.getElementById("person-name");
-  const personName = nameInput?.value.trim();
+  const rawName = nameInput?.value || "";
+  const personName = titleCaseName(rawName);
 
   if (!personName) {
     setPeopleMessage("Please enter a name.", true);
@@ -322,12 +362,17 @@ window.addTask = async function () {
   }
 
   const text = document.getElementById("task-input").value.trim();
-  const assignedTo = document.getElementById("assigned-to").value.trim();
+  const rawAssignedTo = document.getElementById("assigned-to").value;
+  const trimmedAssignedTo = rawAssignedTo.trim();
 
   if (!text) {
     alert("Please enter a task");
     return;
   }
+
+  const assignedTo = trimmedAssignedTo
+    ? addPersonIfMissing(trimmedAssignedTo)
+    : "";
 
   try {
     await addDoc(collection(db, "tasks"), {
